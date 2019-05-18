@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+
+<!--
+  Want to customize this website? Learn more about how HTML works:
+  https://developer.mozilla.org/en-US/docs/Learn/HTML/Introduction_to_HTML
+-->
+
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>PTD</title>
+    <link rel="stylesheet" href="/styles.css">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+
+  <body>
+    <h1 id="greeting"></h1>
+
+    <p>
+      This website was created by the Mimo team with <a id="beaker-url" title="The Beaker Browser">The Beaker Browser</a>.
+    </p>
+
+    <p id="status"></p>
+    
+    <input id="input_field" placeholder="What's on your mind?"></input>
+  </body>
+
+
+  <script>
+  
+    // code for displaying the archive's title in the h1 tag
+    const site = new DatArchive(window.location)
+    site.readFile('/dat.json').then(res => {
+      const title = JSON.parse(res).title
+      document.getElementById("greeting").innerHTML = `Hello ${title}!`
+    });
+    
+    // code for adding current status to our page
+    const remote = new DatArchive('dat://1f14f5b419ca4404e378e4ecf884a19a278a8d523e4c09aa0f00a337b391c15f/')
+    const cleanUrl = site.url.slice(6, site.url.length - 1)
+    remote.readFile(`/${cleanUrl}/status.txt`).then(res => {
+      document.getElementById("status").innerHTML = res
+    });
+    
+    // code for updating new status and writing it to request.json
+    const input = document.getElementById("input_field");
+    
+    input.addEventListener("keyup", async function(event) {
+      
+      // Number 13 is the "Enter" key on the keyboard
+      if (event.keyCode === 13) {
+        
+        const datjson = await site.readFile('/dat.json')
+        const target = JSON.parse(datjson).description
+        const reqobj = {
+          target: target,
+          status: input.value
+        }
+        const req = JSON.stringify(reqobj)
+        await site.writeFile('/request.json', req)
+      }
+    })
+    
+  </script>
+</html>
