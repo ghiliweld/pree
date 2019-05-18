@@ -8,26 +8,33 @@ I built a watchtower on Dat essentially, it [prees](https://www.urbandictionary.
 
 Here's how the magic happens
 ```js
-const site = new DatArchive(window.location)
-console.log(site.url)
-site._loadPromise
 
-let count = 0
-
-async function initDat() {
-  count++
-  const archive = await DatArchive.create({ title: `${count}` })
-  archive._loadPromise
-  console.log('created archive')
-  archive.watch('/request.txt', async function ({path}) {
-    console.log('caught a change')
-    const req = await archive.readFile(path)
-    await resp(req)
-    console.log('all done', count)
-  })
-}
-
-async function resp(request) {
-  await site.writeFile('/response.txt', request)
-}
+  console.log(site.url)
+  site._loadPromise
+  let count = 0
+  async function createAndLinkDat() {
+    const archive = await DatArchive.fork('dat://3f6fa0a38d5cb7fc41f54d1859cbfd4c5a7316ce3884e675271f2632b807bb2c/', {
+      title: 'Enter A Name For Your Profile',
+      type: ['user-profile'],
+      description: "dat://1f14f5b419ca4404e378e4ecf884a19a278a8d523e4c09aa0f00a337b391c15f/"
+    })
+    archive._loadPromise
+    console.log('forked archive', archive.url)
+    archive.watch('/request.json', async function ({path}) {
+      console.log('caught a change')
+      const reqobj = await archive.readFile(path)
+      const req = JSON.parse(reqobj).status
+      const url = archive.url.slice(6, archive.url.length - 1)
+      await respond(url, req)
+    })
+  }
+  async function respond(url, request) {
+    const dir = await site.readdir('/')
+    if (dir.includes(url)) {
+      await site.writeFile(`/${url}/status.txt`, request)
+    } else {
+      await site.mkdir(`/${url}`)
+      await site.writeFile(`/${url}/status.txt`, request)
+    }
+  }
 ```
